@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Built application files
 *.apk
 *.ap_
@@ -12,6 +13,9 @@
 bin/
 gen/
 out/
+obj/
+libs/*/*.so
+
 
 # Gradle files
 .gradle/
@@ -38,3 +42,5 @@ captures/
 
 # Keystore files
 *.jks
+
+
