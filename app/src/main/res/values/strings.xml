@@ -3,5 +3,6 @@
 
     <string name="app_name">Measurement Emulator</string>
     <string name="activity">Activity</string>
-
+	<string name="ugyh">μGy/h</string>
+	<string name="ugy">μGy</string>
 </resources>
