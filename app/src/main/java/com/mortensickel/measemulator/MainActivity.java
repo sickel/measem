@@ -188,7 +188,7 @@ public class MainActivity extends Activity
 		Button b = (Button)v;
 		if(poweron){
 			long now=System.currentTimeMillis();
-			if(now> shutdowntime && now < shutdowntime+1000){
+			if(now> shutdowntime && now < shutdowntime+500){
 				timer.cancel();
 				timer.purge();
 				h2.removeCallbacks(run);
@@ -197,7 +197,7 @@ public class MainActivity extends Activity
 				mode=MODE_OFF;
 				switchMode(mode);
 			}
-			shutdowntime = System.currentTimeMillis()+1000;
+			shutdowntime = System.currentTimeMillis()+500;
 			
 		}else{
 			shutdowntime=0;
