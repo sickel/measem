@@ -113,7 +113,7 @@
 					android:layout_width="50dp"
 					android:background="@drawable/roundbutton"
 					android:layout_alignParentLeft="true"
-					android:id="@+id/btArrow"/>
+					android:id="@+id/btMode"/>
 
 				<Button
 					android:layout_height="50dp"
@@ -183,6 +183,7 @@
 				android:layout_height="wrap_content"
 				android:inputType="number"
 				android:layout_width="50dp"
+				android:text="1"
 				android:ems="10"
 				android:id="@+id/activity"/>
 

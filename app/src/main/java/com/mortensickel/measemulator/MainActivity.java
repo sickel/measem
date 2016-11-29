@@ -22,6 +22,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.*;
+import android.view.View.*;
 
 
 
@@ -29,13 +30,22 @@ public class MainActivity extends Activity
 {
 	/*
 	0.44 pps = 0.1uSv/h
-	16. pulser pr nSv
+	ca 16. pulser pr nSv
 	*/
 	boolean poweron=false;
+	boolean showdebug=false;
+	long shutdowntime=0;
 	long meastime;
 	TextView text,text2, text3,tvAct, tvDoserate;
     long starttime = 0;
 	public long pulses=0;
+	Integer mode=0;
+	boolean shuttingdown=false;
+	final Integer MAXMODE=2;
+	final int MODE_OFF=0;
+	final int MODE_DOSERATE=1;
+	final int MODE_DOSE=2;
+	final double PULSEFACT=4.4;
     //this  posts a message to the main thread from our timertask
     //and updates the textfield
 	final Handler h = new Handler(new Callback() {
@@ -45,12 +55,20 @@ public class MainActivity extends Activity
 				long millis = System.currentTimeMillis() - starttime;
 				int seconds = (int) (millis / 1000);
 				if(seconds>0){
-					double doserate=(double)pulses/(double)seconds/4.4;
-					tvDoserate.setText(String.format("%.2f",doserate));
+					double display=0;
+					if (mode==MODE_DOSERATE){
+						display=(double)pulses/(double)seconds/PULSEFACT;
+					}
+					if (mode==MODE_DOSE){
+						display=(double)pulses/PULSEFACT/3600;
+					}
+					tvDoserate.setText(String.format("%.2f",display));
 				}
-				int minutes = seconds / 60;
-				seconds     = seconds % 60;
-				text.setText(String.format("%d:%02d", minutes, seconds));			
+				if(showdebug){
+					int minutes = seconds / 60;
+					seconds     = seconds % 60;
+					text.setText(String.format("%d:%02d", minutes, seconds));			
+				}
 				return false;
 			}
 		});
@@ -60,28 +78,11 @@ public class MainActivity extends Activity
 
         @Override
         public void run() {
-			
-			Integer act=Integer.parseInt(tvAct.getText().toString());
-			if(act==0){
-				act=1;
-			}
-			Integer interval=5000/act;
-			if (interval==0){
-				interval=1;
-			}
-			
-			long pause=interval;
-			if(interval > 5){
-				Random rng=new Random();
-				pause=(long)rng.nextGaussian();
-			
-				Integer sd=interval/4;
-				pause=pause*sd+interval;
-				if(pause<0){pause=0;}
-			}
+			long pause=pause(getInterval());
 			h2.postDelayed(run,pause);
-			text3.setText(String.format("%d",pause));
-			
+			if(showdebug){
+				text3.setText(String.format("%d",pause));
+			}
 			//h2.postDelayed(this,pause.intValue());
 			//text3.setText(String.format("%d",pause.intValue()));
 			receivepulse();
@@ -89,6 +90,33 @@ public class MainActivity extends Activity
         }
     };
     
+	public Integer getInterval(){
+		Integer act=Integer.parseInt(tvAct.getText().toString());
+		if(act==0){
+			act=1;
+		}
+		Integer interval=5000/act;
+		if (interval==0){
+			interval=1;
+		}
+		return(interval);
+	}
+	
+	public long pause(Integer interval){
+
+		long pause=interval;
+		if(interval > 5){
+			Random rng=new Random();
+			pause=(long)rng.nextGaussian();
+
+			Integer sd=interval/4;
+			pause=pause*sd+interval;
+			if(pause<0){pause=0;}
+		}
+		return(pause);
+	}
+	
+	
 	public void receivepulse(){
 		LinearLayout myText = (LinearLayout) findViewById(R.id.llLed );
 		Animation anim = new AlphaAnimation(0.0f, 1.0f);
@@ -99,7 +127,9 @@ public class MainActivity extends Activity
 		myText.startAnimation(anim);
 		pulses++;
 		Double sdev=Math.sqrt(pulses);
+		if(showdebug){
 		text2.setText(String.format("%d - %.1f - %.0f %%",pulses,sdev,sdev/pulses*100));
+		}
 	}
 	
 	//tells handler to send a message
@@ -117,13 +147,14 @@ public class MainActivity extends Activity
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-
+		
         text = (TextView)findViewById(R.id.text);
         text2 = (TextView)findViewById(R.id.text2);
         text3 = (TextView)findViewById(R.id.text3);
 		tvDoserate = (TextView)findViewById(R.id.etDoserate);
 		tvAct=(TextView)findViewById(R.id.activity);
-        Button b = (Button)findViewById(R.id.button);
+        switchMode(mode);
+		Button b = (Button)findViewById(R.id.button);
         b.setText("start");
         b.setOnClickListener(new View.OnClickListener() {
 
@@ -142,7 +173,7 @@ public class MainActivity extends Activity
 						timer = new Timer();
 						timer.schedule(new firstTask(), 0,500);
 						//timer.schedule(new secondTask(),  0,500);
-						h2.postDelayed(run, 0);
+						h2.postDelayed(run, pause(getInterval()));
 						b.setText("stop");
 						poweron=true;
 					}
@@ -152,27 +183,48 @@ public class MainActivity extends Activity
 
     b = (Button)findViewById(R.id.btPower);
 	b.setOnClickListener(new View.OnClickListener() {
-
 	@Override
 	public void onClick(View v) {
 		Button b = (Button)v;
-		
 		if(poweron){
-			timer.cancel();
-			timer.purge();
-			h2.removeCallbacks(run);
-			pulses=0;
-			poweron=false;
+			long now=System.currentTimeMillis();
+			if(now> shutdowntime && now < shutdowntime+1000){
+				timer.cancel();
+				timer.purge();
+				h2.removeCallbacks(run);
+				pulses=0;
+				poweron=false;
+				mode=MODE_OFF;
+				switchMode(mode);
+			}
+			shutdowntime = System.currentTimeMillis()+1000;
+			
 		}else{
+			shutdowntime=0;
 			starttime = System.currentTimeMillis();
 			timer = new Timer();
 			timer.schedule(new firstTask(), 0,500);
 			//timer.schedule(new secondTask(),  0,500);
-			h2.postDelayed(run, 0);
+			h2.postDelayed(run, pause(getInterval()));
+			mode=1;
+			switchMode(mode);
 			poweron=true;
 		}
 	}
 	});
+	b=(Button)findViewById(R.id.btMode);
+	b.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					modechange(v);
+					}});
+	b=(Button)findViewById(R.id.btLight);
+	b.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					showdebug=!showdebug;
+				}});
+		
 }
   @Override
     public void onPause() {
@@ -183,5 +235,32 @@ public class MainActivity extends Activity
         Button b = (Button)findViewById(R.id.button);
         b.setText("start");
     }
+	
+	
+	public void modechange(View v){
+		mode++;
+		if (mode > MAXMODE){
+			mode=1;
+		}
+		switchMode(mode);
+	}
+
+	public void switchMode(int mode){
+		int unit=0;
+		switch(mode){
+			case MODE_DOSERATE:
+				unit = R.string.ugyh;
+				break;
+			case MODE_DOSE:
+				unit = R.string.ugy;
+				break;
+			case MODE_OFF:
+				unit= R.string.blank;
+				tvDoserate.setText("");
+				break;
+		}
+		TextView tv=(TextView)findViewById(R.id.etUnit);
+		tv.setText(unit);
+	}
 	
 }
