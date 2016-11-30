@@ -24,7 +24,7 @@ import android.widget.TextView;
 import android.widget.*;
 import android.view.View.*;
 
-
+/* Todo over a certain treshold, change calibration factor */
 
 public class MainActivity extends Activity 
 {
@@ -37,19 +37,19 @@ public class MainActivity extends Activity
 	long shutdowntime=0;
 	long meastime;
 	TextView text,text2, text3,tvAct, tvDoserate;
-    long starttime = 0;
+	long starttime = 0;
 	public long pulses=0;
 	Integer mode=0;
-	boolean shuttingdown=false;
 	final Integer MAXMODE=2;
 	final int MODE_OFF=0;
 	final int MODE_DOSERATE=1;
 	final int MODE_DOSE=2;
-	final double PULSEFACT=4.4;
+	double calibration=4.4;
     //this  posts a message to the main thread from our timertask
     //and updates the textfield
 	final Handler h = new Handler(new Callback() {
-
+	long activity=1;
+	
 			@Override
 			public boolean handleMessage(Message msg) {
 				long millis = System.currentTimeMillis() - starttime;
@@ -57,10 +57,10 @@ public class MainActivity extends Activity
 				if(seconds>0){
 					double display=0;
 					if (mode==MODE_DOSERATE){
-						display=(double)pulses/(double)seconds/PULSEFACT;
+						display=(double)pulses/(double)seconds/calibration;
 					}
 					if (mode==MODE_DOSE){
-						display=(double)pulses/PULSEFACT/3600;
+						display=(double)pulses/calibration/3600;
 					}
 					tvDoserate.setText(String.format("%.2f",display));
 				}
@@ -72,7 +72,8 @@ public class MainActivity extends Activity
 				return false;
 			}
 		});
-	//runs without timer be reposting self
+		
+	//runs without timer be reposting self after a random interval
 	Handler h2 = new Handler();
 	Runnable run = new Runnable() {
 
@@ -104,16 +105,16 @@ public class MainActivity extends Activity
 	
 	public long pause(Integer interval){
 
-		long pause=interval;
+		double pause=interval;
 		if(interval > 5){
 			Random rng=new Random();
-			pause=(long)rng.nextGaussian();
+			pause=rng.nextGaussian();
 
 			Integer sd=interval/4;
 			pause=pause*sd+interval;
 			if(pause<0){pause=0;}
 		}
-		return(pause);
+		return((long)pause);
 	}
 	
 	
