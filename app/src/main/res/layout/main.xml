@@ -159,19 +159,19 @@
 			android:layout_height="wrap_content"
 			android:layout_width="wrap_content"
 			android:ems="10"
-			android:id="@+id/text"/>
+			android:id="@+id/tvTime"/>
 
 		<TextView
 			android:layout_height="wrap_content"
 			android:layout_width="wrap_content"
 			android:ems="10"
-			android:id="@+id/text2"/>
+			android:id="@+id/tvPulsedata"/>
 
 		<TextView
 			android:layout_height="wrap_content"
 			android:layout_width="wrap_content"
 			android:ems="10"
-			android:id="@+id/text3"/>
+			android:id="@+id/tvPause"/>
 
 		<LinearLayout
 			android:layout_height="wrap_content"

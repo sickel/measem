@@ -25,7 +25,11 @@ import android.widget.*;
 import android.view.View.*;
 
 /* Todo over a certain treshold, change calibration factor */
-
+// TODO finish icons
+// TODO location
+// TODO input bacground and.source. Calculate activity from distance
+// TODO Use distribution map 
+// TODO 
 public class MainActivity extends Activity 
 {
 	/*
@@ -36,7 +40,7 @@ public class MainActivity extends Activity
 	boolean showdebug=false;
 	long shutdowntime=0;
 	long meastime;
-	TextView text,text2, text3,tvAct, tvDoserate;
+	TextView tvTime,tvPulsedata, tvPause,tvAct, tvDoserate;
 	long starttime = 0;
 	public long pulses=0;
 	Integer mode=0;
@@ -68,27 +72,23 @@ public class MainActivity extends Activity
 				if(showdebug){
 					int minutes = seconds / 60;
 					seconds     = seconds % 60;
-					text.setText(String.format("%d:%02d", minutes, seconds));			
+					tvTime.setText(String.format("%d:%02d", minutes, seconds));			
 				}
 				return false;
 			}
 		});
 		
-	//runs without timer be reposting self after a random interval
+	//runs without timer - reposting self after a random interval
 	Handler h2 = new Handler();
 	Runnable run = new Runnable() {
-
         @Override
         public void run() {
 			long pause=pause(getInterval());
 			h2.postDelayed(run,pause);
 			if(showdebug){
-				text3.setText(String.format("%d",pause));
+				tvPause.setText(String.format("%d",pause));
 			}
-			//h2.postDelayed(this,pause.intValue());
-			//text3.setText(String.format("%d",pause.intValue()));
 			receivepulse();
-			//Handler blkh=new Handler();
         }
     };
     
@@ -105,7 +105,6 @@ public class MainActivity extends Activity
 	}
 	
 	public long pause(Integer interval){
-
 		double pause=interval;
 		if(interval > 5){
 			Random rng=new Random();
@@ -122,7 +121,7 @@ public class MainActivity extends Activity
 	public void receivepulse(){
 		LinearLayout myText = (LinearLayout) findViewById(R.id.llLed );
 		Animation anim = new AlphaAnimation(0.0f, 1.0f);
-		anim.setDuration(50); //You can manage the time of the blink with this parameter
+		anim.setDuration(20); //You can manage the time of the blink with this parameter
 		anim.setStartOffset(20);
 		anim.setRepeatMode(Animation.REVERSE);
 		anim.setRepeatCount(0);
@@ -130,7 +129,7 @@ public class MainActivity extends Activity
 		pulses++;
 		Double sdev=Math.sqrt(pulses);
 		if(showdebug){
-		text2.setText(String.format("%d - %.1f - %.0f %%",pulses,sdev,sdev/pulses*100));
+		tvPulsedata.setText(String.format("%d - %.1f - %.0f %%",pulses,sdev,sdev/pulses*100));
 		}
 	}
 	
@@ -150,21 +149,19 @@ public class MainActivity extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 		
-        text = (TextView)findViewById(R.id.text);
-        text2 = (TextView)findViewById(R.id.text2);
-        text3 = (TextView)findViewById(R.id.text3);
+        tvTime = (TextView)findViewById(R.id.tvTime);
+        tvPulsedata = (TextView)findViewById(R.id.tvPulsedata);
+        tvPause = (TextView)findViewById(R.id.tvPause);
 		tvDoserate = (TextView)findViewById(R.id.etDoserate);
 		tvAct=(EditText)findViewById(R.id.activity);
 		tvAct.addTextChangedListener(new TextWatcher() {
 				@Override
 				public void onTextChanged(CharSequence s, int start, int before, int count) {
-
 					// TODO Auto-generated method stub
 				}
 
 				@Override
 				public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
 					// TODO Auto-generated method stub
 				}
 
@@ -173,42 +170,42 @@ public class MainActivity extends Activity
 					String act=tvAct.getText().toString();
 					if(act.equals("")){act="1";}
 					sourceact=Integer.parseInt(act);
-					// TODO Auto-generated method stub
+					// TODO better errorchecking.
+					// TODO disable if using geolocation
 				}
 			});
         switchMode(mode);
 		Button b = (Button)findViewById(R.id.button);
         b.setText("start");
         b.setOnClickListener(new View.OnClickListener() {
-
-				@Override
-				public void onClick(View v) {
-					Button b = (Button)v;
-					if(poweron){
-						timer.cancel();
-						timer.purge();
-						h2.removeCallbacks(run);
-						pulses=0;
-						b.setText("start");
-						poweron=false;
-					}else{
-						starttime = System.currentTimeMillis();
-						timer = new Timer();
-						timer.schedule(new firstTask(), 0,500);
-						//timer.schedule(new secondTask(),  0,500);
-						h2.postDelayed(run, pause(getInterval()));
-						b.setText("stop");
-						poweron=true;
-					}
+			@Override
+			public void onClick(View v) {
+				Button b = (Button)v;
+				if(poweron){
+					timer.cancel();
+					timer.purge();
+					h2.removeCallbacks(run);
+					pulses=0;
+					b.setText("start");
+					poweron=false;
+				}else{
+					starttime = System.currentTimeMillis();
+					timer = new Timer();
+					timer.schedule(new firstTask(), 0,500);
+					//timer.schedule(new secondTask(), 0,500);
+					h2.postDelayed(run, pause(getInterval()));
+					b.setText("stop");
+					poweron=true;
 				}
-			});
+			}
+		});
     
 
     b = (Button)findViewById(R.id.btPower);
 	b.setOnClickListener(new View.OnClickListener() {
 	@Override
 	public void onClick(View v) {
-		Button b = (Button)v;
+		//Button b = (Button)v;
 		if(poweron){
 			long now=System.currentTimeMillis();
 			if(now> shutdowntime && now < shutdowntime+500){
@@ -227,7 +224,6 @@ public class MainActivity extends Activity
 			starttime = System.currentTimeMillis();
 			timer = new Timer();
 			timer.schedule(new firstTask(), 0,500);
-			//timer.schedule(new secondTask(),  0,500);
 			h2.postDelayed(run, pause(getInterval()));
 			mode=1;
 			switchMode(mode);
@@ -237,19 +233,18 @@ public class MainActivity extends Activity
 	});
 	b=(Button)findViewById(R.id.btMode);
 	b.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					modechange(v);
-					}});
+		@Override
+		public void onClick(View v) {
+			modechange(v);
+	}});
 	b=(Button)findViewById(R.id.btLight);
 	b.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					showdebug=!showdebug;
-				}});
-		
-}
-  @Override
+		@Override
+		public void onClick(View v) {
+			showdebug=!showdebug;
+		}});		
+	}
+  	@Override
     public void onPause() {
         super.onPause();
         timer.cancel();
