@@ -1,6 +1,6 @@
 package com.mortensickel.measemulator;
 
-
+import android.text.*;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
@@ -45,10 +45,11 @@ public class MainActivity extends Activity
 	final int MODE_DOSERATE=1;
 	final int MODE_DOSE=2;
 	double calibration=4.4;
+	public Integer sourceact=1;
     //this  posts a message to the main thread from our timertask
     //and updates the textfield
 	final Handler h = new Handler(new Callback() {
-	long activity=1;
+	
 	
 			@Override
 			public boolean handleMessage(Message msg) {
@@ -92,7 +93,7 @@ public class MainActivity extends Activity
     };
     
 	public Integer getInterval(){
-		Integer act=Integer.parseInt(tvAct.getText().toString());
+		Integer act=sourceact;
 		if(act==0){
 			act=1;
 		}
@@ -153,7 +154,28 @@ public class MainActivity extends Activity
         text2 = (TextView)findViewById(R.id.text2);
         text3 = (TextView)findViewById(R.id.text3);
 		tvDoserate = (TextView)findViewById(R.id.etDoserate);
-		tvAct=(TextView)findViewById(R.id.activity);
+		tvAct=(EditText)findViewById(R.id.activity);
+		tvAct.addTextChangedListener(new TextWatcher() {
+				@Override
+				public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+					// TODO Auto-generated method stub
+				}
+
+				@Override
+				public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+					// TODO Auto-generated method stub
+				}
+
+				@Override
+				public void afterTextChanged(Editable s) {
+					String act=tvAct.getText().toString();
+					if(act.equals("")){act="1";}
+					sourceact=Integer.parseInt(act);
+					// TODO Auto-generated method stub
+				}
+			});
         switchMode(mode);
 		Button b = (Button)findViewById(R.id.button);
         b.setText("start");
@@ -239,11 +261,12 @@ public class MainActivity extends Activity
 	
 	
 	public void modechange(View v){
+		if(mode > 0){
 		mode++;
 		if (mode > MAXMODE){
 			mode=1;
 		}
-		switchMode(mode);
+		switchMode(mode);}
 	}
 
 	public void switchMode(int mode){
