@@ -34,8 +34,8 @@ import com.google.android.gms.common.*;
 // Todo over a certain treshold, change calibration factor 
 // TODO settable calibration factor
 // TODO finish icons
-// TODO location
-// TODO input bacground and source. Calculate activity from distance
+// DONE location 
+// TODO input background and source. Calculate activity from distance
 // TODO Use distribution map 
 // TODO add settings menu
 // TODO generic skin
@@ -66,7 +66,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	public final String TAG="measem";
 	double calibration=4.4;
 	public Integer sourceact=1;
-	protected long lastpulses;
+	protected long lastpulses=0;
 	public boolean gpsenabled = true;
 	public Context context;
 	public Integer gpsinterval=2000;
@@ -153,7 +153,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 				if(seconds>0){
 					double display=0;
 					if( mode==MODE_MOMENTANDOSE){
-						if (lastpulses==0){
+						if (lastpulses==0 || (lastpulses>pulses)){
 							display=0;
 						}else{
 							display=((pulses-lastpulses)/calibration);
