@@ -45,6 +45,7 @@ public class MainActivity extends Activity
 	0.44 pps = 0.1uSv/h
 	ca 16. pulser pr nSv
 	*/
+	GPSTracker gps;
 	boolean poweron=false;
 	boolean showdebug=false;
 	long shutdowntime=0;
@@ -116,11 +117,25 @@ public class MainActivity extends Activity
 	Runnable gpsRun=new Runnable(){
 		@Override
 		public void run(){
-			locationListener = new MyLocationListener();
+			//locationListener = new MyLocationListener();
 
-			locationManager.requestLocationUpdates(LocationManager
-												   .GPS_PROVIDER, 5000, 10,locationListener);
-			
+			//locationManager.requestLocationUpdates(LocationManager .GPS_PROVIDER, 5000, 10,locationListener);
+			gps = new GPSTracker(context);
+
+			// Check if GPS enabled
+			if(gps.canGetLocation()) {
+
+				double latitude = gps.getLatitude();
+				double longitude = gps.getLongitude();
+
+				// \n is for new line
+				Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
+			} else {
+				// Can't get location.
+				// GPS or network is not enabled.
+				// Ask user to enable GPS/network in settings.
+				gps.showSettingsAlert();
+			}
 		//	Toast.makeText(context,"Location testing2",Toast.LENGTH_SHORT).show();
 			gpsHandler.postDelayed(gpsRun,gpsinterval);
 		}
@@ -324,7 +339,10 @@ public class MainActivity extends Activity
 	// from http://rdcworld-android.blogspot.no/2012/01/get-current-location-coordinates-city.html?m=1
 	/*----------Listener class to get coordinates ------------- */
 	private class MyLocationListener implements LocationListener {
-        @Override
+       
+		private Location currentBestLocation = null;
+		
+		@Override
         public void onLocationChanged(Location loc) {
 
             
@@ -356,5 +374,24 @@ public class MainActivity extends Activity
     
 	}
 	
-	
+	/*private Location getLastBestLocation() {
+		Location locationGPS = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+		Location locationNet = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+		long GPSLocationTime = 0;
+		if (null != locationGPS) { GPSLocationTime = locationGPS.getTime(); }
+
+		long NetLocationTime = 0;
+
+		if (null != locationNet) {
+			NetLocationTime = locationNet.getTime();
+		}
+
+		if ( 0 < GPSLocationTime - NetLocationTime ) {
+			return locationGPS;
+		}
+		else {
+			return locationNet;
+		}
+	}*/
 }
