@@ -29,6 +29,7 @@ import android.location.Location;
 import android.util.Log;
 import com.google.android.gms.location.*;
 import com.google.android.gms.common.*;
+import android.preference.*;
 
 
 // Todo over a certain treshold, change calibration factor 
@@ -73,6 +74,16 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	private GoogleApiClient gac;
 	private Location here,there;
 	protected LocationRequest loreq;
+	
+	public static class SettingsFragment extends PreferenceFragment{
+		@Override
+		public void onCreate(Bundle savedInstanceState){
+			super.onCreate(savedInstanceState);
+			addPreferencesFromResource(R.xml.preferences);
+		}
+	}
+	
+	
 	@Override
 	public void onConnectionFailed(ConnectionResult p1)
 	{
