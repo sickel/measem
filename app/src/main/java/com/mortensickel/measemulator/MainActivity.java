@@ -50,7 +50,6 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	0.44 pps = 0.1uSv/h
 	ca 16. pulser pr nSv
 	*/
-	GPSTracker gps;
 	boolean poweron=false;
 	boolean showdebug=false;
 	long shutdowntime=0;
@@ -69,10 +68,8 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	public Integer sourceact=1;
 	protected long lastpulses;
 	public boolean gpsenabled = true;
-	//private LocationManager locationManager=null;
-	//private LocationListener locationListener=null; 
 	public Context context;
-	public Integer gpsinterval=5000;
+	public Integer gpsinterval=2000;
 	private GoogleApiClient gac;
 	private Location here,there;
 	protected LocationRequest loreq;
@@ -84,7 +81,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 
 	protected void createLocationRequest(){
 		loreq = new LocationRequest();
-		loreq.setInterval(2000);
+		loreq.setInterval(gpsinterval);
 		loreq.setFastestInterval(100);
 		loreq.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 	}
@@ -110,7 +107,6 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 		double distance=here.distanceTo(there);
 		sourceact=(int)Math.round(2.0+1000.0/(distance*distance));
 		tvAct.setText(String.valueOf(sourceact));
-		//Toast.makeText(this,"newloc",Toast.LENGTH_SHORT).show();
 	}
 
 	
@@ -197,33 +193,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
         }
     };
     
-	Handler gpsHandler = new Handler();
-	Runnable gpsRun=new Runnable(){
-		@Override
-		public void run(){
-			//locationListener = new MyLocationListener();
-
-			//locationManager.requestLocationUpdates(LocationManager .GPS_PROVIDER, 5000, 10,locationListener);
-			/*gps = new GPSTracker(context);
-
-			// Check if GPS enabled
-			if(gps.canGetLocation()) {
-
-				double latitude = gps.getLatitude();
-				double longitude = gps.getLongitude();
-
-				// \n is for new line
-				Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
-			} else {
-				// Can't get location.
-				// GPS or network is not enabled.
-				// Ask user to enable GPS/network in settings.
-				gps.showSettingsAlert();
-			}
-		//	Toast.makeText(context,"Location testing2",Toast.LENGTH_SHORT).show();
-			gpsHandler.postDelayed(gpsRun,gpsinterval);*/
-		}
-	};
+	
 	
 	public Integer getInterval(){
 		Integer act=sourceact;
@@ -346,7 +316,6 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 				timer.cancel();
 				timer.purge();
 				h2.removeCallbacks(run);
-				gpsHandler.removeCallbacks(gpsRun);
 				pulses=0;
 				poweron=false;
 				mode=MODE_OFF;
@@ -359,7 +328,6 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 			starttime = System.currentTimeMillis();
 			timer = new Timer();
 			timer.schedule(new firstTask(), 0,500); 
-			//gpsHandler.postDelayed(gpsRun,gpsinterval);
 			startLocationUpdates();
 			h2.postDelayed(run, pause(getInterval()));
 			mode=1;
@@ -380,8 +348,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 		public void onClick(View v) {
 			showdebug=!showdebug;
 		}});	
-		//locationManager = (LocationManager) 
-		getSystemService(Context.LOCATION_SERVICE);
+	
 		
 	}
   	@Override
@@ -423,62 +390,5 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 		tv.setText(unit);
 	}
 	
-	// from http://rdcworld-android.blogspot.no/2012/01/get-current-location-coordinates-city.html?m=1
-	/*----------Listener class to get coordinates ------------- */
-	/*private class MyLocationListener implements LocationListener {
-       
-		private Location currentBestLocation = null;
-		
-		@Override
-        public void onLocationChanged(Location loc) {
-
-            
-            Toast.makeText(getBaseContext(),"Location changed : Lat: " +
-						   loc.getLatitude()+ " Lng: " + loc.getLongitude(),
-						   Toast.LENGTH_SHORT).show();
-            String longitude = "Longitude: " +loc.getLongitude();  
-			Log.v(TAG, longitude);
-			String latitude = "Latitude: " +loc.getLatitude();
-			Log.v(TAG, latitude);
-
-			       }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-            // TODO Auto-generated method stub         
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-            // TODO Auto-generated method stub         
-        }
-
-        @Override
-        public void onStatusChanged(String provider, 
-									int status, Bundle extras) {
-            // TODO Auto-generated method stub         
-        }
-    
-	}
 	
-	/*private Location getLastBestLocation() {
-		Location locationGPS = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-		Location locationNet = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-
-		long GPSLocationTime = 0;
-		if (null != locationGPS) { GPSLocationTime = locationGPS.getTime(); }
-
-		long NetLocationTime = 0;
-
-		if (null != locationNet) {
-			NetLocationTime = locationNet.getTime();
-		}
-
-		if ( 0 < GPSLocationTime - NetLocationTime ) {
-			return locationGPS;
-		}
-		else {
-			return locationNet;
-		}
-	}*/
 }
