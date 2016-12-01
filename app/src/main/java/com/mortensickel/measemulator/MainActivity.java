@@ -1,4 +1,6 @@
 package com.mortensickel.measemulator;
+// http://maps.google.com/maps?q=loc:59.948509,10.602627
+import com.google.android.gms.common.api.*;
 import android.content.Context;
 import android.text.*;
 import android.app.Activity;
@@ -23,8 +25,10 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.*;
 import android.view.View.*;
-import android.location.*;
+import android.location.Location;
 import android.util.Log;
+import com.google.android.gms.location.*;
+import com.google.android.gms.common.*;
 
 
 // Todo over a certain treshold, change calibration factor 
@@ -39,6 +43,7 @@ import android.util.Log;
 
 
 public class MainActivity extends Activity 
+implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,LocationListener
 {
 	/*
 	AUTOMESS:
@@ -54,21 +59,92 @@ public class MainActivity extends Activity
 	long starttime = 0;
 	public long pulses=0;
 	Integer mode=0;
-	final Integer MAXMODE=2;
+	final Integer MAXMODE=3;
 	final int MODE_OFF=0;
-	final int MODE_DOSERATE=1;
-	final int MODE_DOSE=2;
+	final int MODE_MOMENTANDOSE=1;
+	final int MODE_DOSERATE=2;
+	final int MODE_DOSE=3;
 	public final String TAG="measem";
 	double calibration=4.4;
 	public Integer sourceact=1;
+	protected long lastpulses;
 	public boolean gpsenabled = true;
-	private LocationManager locationManager=null;
-	private LocationListener locationListener=null; 
+	//private LocationManager locationManager=null;
+	//private LocationListener locationListener=null; 
 	public Context context;
 	public Integer gpsinterval=5000;
+	private GoogleApiClient gac;
+	private Location here,there;
+	protected LocationRequest loreq;
+	@Override
+	public void onConnectionFailed(ConnectionResult p1)
+	{
+		// TODO: Implement this method
+	}
+
+	protected void createLocationRequest(){
+		loreq = new LocationRequest();
+		loreq.setInterval(2000);
+		loreq.setFastestInterval(100);
+		loreq.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+	}
+	
+	protected void startLocationUpdates(){
+		if(loreq==null){
+			createLocationRequest();
+		}
+		there = new Location("dummyprovider");
+		there.setLatitude(59.948509);
+		there.setLongitude(10.602627);
+		LocationServices.FusedLocationApi.requestLocationUpdates(gac,loreq,this);
+	}
+	
+	public void ConnectionCallbacks(){
+		
+	}
+
+	@Override
+	public void onLocationChanged(Location p1)
+	{
+		here=p1;
+		double distance=here.distanceTo(there);
+		sourceact=(int)Math.round(2.0+1000.0/(distance*distance));
+		tvAct.setText(String.valueOf(sourceact));
+		//Toast.makeText(this,"newloc",Toast.LENGTH_SHORT).show();
+	}
+
 	
 	
 	
+	
+	@Override
+	public void onConnected(Bundle p1)
+	{
+		Location loc = LocationServices.FusedLocationApi.getLastLocation(gac);
+		if(loc != null){
+			//Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " +String.valueOf(loc.getLatitude()) + "\nLong: " + String.valueOf(loc.getLongitude()), Toast.LENGTH_LONG).show();
+			here=loc;
+		}
+		// TODO: Implement this method
+	}
+
+	@Override
+	public void onConnectionSuspended(int p1)
+	{
+		// TODO: Implement this method
+	}
+
+	protected void onStart(){
+		gac.connect();
+		super.onStart();
+	}
+	
+	
+	protected void onStop(){
+		gac.disconnect();
+		super.onStop();
+	}
+	//public.void 
 	
     //this  posts a message to the main thread from our timertask
     //and updates the textfield
@@ -80,6 +156,14 @@ public class MainActivity extends Activity
 				int seconds = (int) (millis / 1000);
 				if(seconds>0){
 					double display=0;
+					if( mode==MODE_MOMENTANDOSE){
+						if (lastpulses==0){
+							display=0;
+						}else{
+							display=((pulses-lastpulses)/calibration);
+						}
+						lastpulses=pulses;
+					}
 					if (mode==MODE_DOSERATE){
 						display=(double)pulses/(double)seconds/calibration;
 					}
@@ -120,7 +204,7 @@ public class MainActivity extends Activity
 			//locationListener = new MyLocationListener();
 
 			//locationManager.requestLocationUpdates(LocationManager .GPS_PROVIDER, 5000, 10,locationListener);
-			gps = new GPSTracker(context);
+			/*gps = new GPSTracker(context);
 
 			// Check if GPS enabled
 			if(gps.canGetLocation()) {
@@ -137,7 +221,7 @@ public class MainActivity extends Activity
 				gps.showSettingsAlert();
 			}
 		//	Toast.makeText(context,"Location testing2",Toast.LENGTH_SHORT).show();
-			gpsHandler.postDelayed(gpsRun,gpsinterval);
+			gpsHandler.postDelayed(gpsRun,gpsinterval);*/
 		}
 	};
 	
@@ -199,6 +283,7 @@ public class MainActivity extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 		context=this;
+		gac=new GoogleApiClient.Builder(this).addConnectionCallbacks(this).addOnConnectionFailedListener(this).addApi(LocationServices.API).build();
         tvTime = (TextView)findViewById(R.id.tvTime);
         tvPulsedata = (TextView)findViewById(R.id.tvPulsedata);
         tvPause = (TextView)findViewById(R.id.tvPause);
@@ -273,8 +358,9 @@ public class MainActivity extends Activity
 			shutdowntime=0;
 			starttime = System.currentTimeMillis();
 			timer = new Timer();
-			timer.schedule(new firstTask(), 0,500);
-			gpsHandler.postDelayed(gpsRun,gpsinterval);
+			timer.schedule(new firstTask(), 0,500); 
+			//gpsHandler.postDelayed(gpsRun,gpsinterval);
+			startLocationUpdates();
 			h2.postDelayed(run, pause(getInterval()));
 			mode=1;
 			switchMode(mode);
@@ -294,7 +380,7 @@ public class MainActivity extends Activity
 		public void onClick(View v) {
 			showdebug=!showdebug;
 		}});	
-		locationManager = (LocationManager) 
+		//locationManager = (LocationManager) 
 		getSystemService(Context.LOCATION_SERVICE);
 		
 	}
@@ -321,6 +407,7 @@ public class MainActivity extends Activity
 	public void switchMode(int mode){
 		int unit=0;
 		switch(mode){
+			case MODE_MOMENTANDOSE:
 			case MODE_DOSERATE:
 				unit = R.string.ugyh;
 				break;
@@ -338,7 +425,7 @@ public class MainActivity extends Activity
 	
 	// from http://rdcworld-android.blogspot.no/2012/01/get-current-location-coordinates-city.html?m=1
 	/*----------Listener class to get coordinates ------------- */
-	private class MyLocationListener implements LocationListener {
+	/*private class MyLocationListener implements LocationListener {
        
 		private Location currentBestLocation = null;
 		
