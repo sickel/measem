@@ -1,5 +1,5 @@
 package com.mortensickel.measemulator;
-
+import android.content.Context;
 import android.text.*;
 import android.app.Activity;
 import android.os.Bundle;
@@ -23,16 +23,25 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.*;
 import android.view.View.*;
+import android.location.*;
+import android.util.Log;
 
-/* Todo over a certain treshold, change calibration factor */
+
+// Todo over a certain treshold, change calibration factor 
+// TODO settable calibration factor
 // TODO finish icons
 // TODO location
-// TODO input bacground and.source. Calculate activity from distance
+// TODO input bacground and source. Calculate activity from distance
 // TODO Use distribution map 
-// TODO 
+// TODO add settings menu
+// TODO generic skin
+// TODO handle shutdown
+
+
 public class MainActivity extends Activity 
 {
 	/*
+	AUTOMESS:
 	0.44 pps = 0.1uSv/h
 	ca 16. pulser pr nSv
 	*/
@@ -48,12 +57,21 @@ public class MainActivity extends Activity
 	final int MODE_OFF=0;
 	final int MODE_DOSERATE=1;
 	final int MODE_DOSE=2;
+	public final String TAG="measem";
 	double calibration=4.4;
 	public Integer sourceact=1;
+	public boolean gpsenabled = true;
+	private LocationManager locationManager=null;
+	private LocationListener locationListener=null; 
+	public Context context;
+	public Integer gpsinterval=5000;
+	
+	
+	
+	
     //this  posts a message to the main thread from our timertask
     //and updates the textfield
 	final Handler h = new Handler(new Callback() {
-	
 	
 			@Override
 			public boolean handleMessage(Message msg) {
@@ -77,8 +95,10 @@ public class MainActivity extends Activity
 				return false;
 			}
 		});
+	
 		
-	//runs without timer - reposting self after a random interval
+		
+	//runs without timer - reposting itself after a random interval
 	Handler h2 = new Handler();
 	Runnable run = new Runnable() {
         @Override
@@ -92,6 +112,20 @@ public class MainActivity extends Activity
         }
     };
     
+	Handler gpsHandler = new Handler();
+	Runnable gpsRun=new Runnable(){
+		@Override
+		public void run(){
+			locationListener = new MyLocationListener();
+
+			locationManager.requestLocationUpdates(LocationManager
+												   .GPS_PROVIDER, 5000, 10,locationListener);
+			
+		//	Toast.makeText(context,"Location testing2",Toast.LENGTH_SHORT).show();
+			gpsHandler.postDelayed(gpsRun,gpsinterval);
+		}
+	};
+	
 	public Integer getInterval(){
 		Integer act=sourceact;
 		if(act==0){
@@ -141,14 +175,15 @@ public class MainActivity extends Activity
             h.sendEmptyMessage(0);
         }
 	};
-
+	
+	
 	
 	Timer timer = new Timer();
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-		
+		context=this;
         tvTime = (TextView)findViewById(R.id.tvTime);
         tvPulsedata = (TextView)findViewById(R.id.tvPulsedata);
         tvPause = (TextView)findViewById(R.id.tvPause);
@@ -192,7 +227,6 @@ public class MainActivity extends Activity
 					starttime = System.currentTimeMillis();
 					timer = new Timer();
 					timer.schedule(new firstTask(), 0,500);
-					//timer.schedule(new secondTask(), 0,500);
 					h2.postDelayed(run, pause(getInterval()));
 					b.setText("stop");
 					poweron=true;
@@ -212,6 +246,7 @@ public class MainActivity extends Activity
 				timer.cancel();
 				timer.purge();
 				h2.removeCallbacks(run);
+				gpsHandler.removeCallbacks(gpsRun);
 				pulses=0;
 				poweron=false;
 				mode=MODE_OFF;
@@ -224,6 +259,7 @@ public class MainActivity extends Activity
 			starttime = System.currentTimeMillis();
 			timer = new Timer();
 			timer.schedule(new firstTask(), 0,500);
+			gpsHandler.postDelayed(gpsRun,gpsinterval);
 			h2.postDelayed(run, pause(getInterval()));
 			mode=1;
 			switchMode(mode);
@@ -242,7 +278,10 @@ public class MainActivity extends Activity
 		@Override
 		public void onClick(View v) {
 			showdebug=!showdebug;
-		}});		
+		}});	
+		locationManager = (LocationManager) 
+		getSystemService(Context.LOCATION_SERVICE);
+		
 	}
   	@Override
     public void onPause() {
@@ -281,5 +320,41 @@ public class MainActivity extends Activity
 		TextView tv=(TextView)findViewById(R.id.etUnit);
 		tv.setText(unit);
 	}
+	
+	// from http://rdcworld-android.blogspot.no/2012/01/get-current-location-coordinates-city.html?m=1
+	/*----------Listener class to get coordinates ------------- */
+	private class MyLocationListener implements LocationListener {
+        @Override
+        public void onLocationChanged(Location loc) {
+
+            
+            Toast.makeText(getBaseContext(),"Location changed : Lat: " +
+						   loc.getLatitude()+ " Lng: " + loc.getLongitude(),
+						   Toast.LENGTH_SHORT).show();
+            String longitude = "Longitude: " +loc.getLongitude();  
+			Log.v(TAG, longitude);
+			String latitude = "Latitude: " +loc.getLatitude();
+			Log.v(TAG, latitude);
+
+			       }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+            // TODO Auto-generated method stub         
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+            // TODO Auto-generated method stub         
+        }
+
+        @Override
+        public void onStatusChanged(String provider, 
+									int status, Bundle extras) {
+            // TODO Auto-generated method stub         
+        }
+    
+	}
+	
 	
 }
