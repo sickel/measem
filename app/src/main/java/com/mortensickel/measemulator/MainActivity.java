@@ -30,6 +30,8 @@ import android.util.Log;
 import com.google.android.gms.location.*;
 import com.google.android.gms.common.*;
 import android.preference.*;
+import android.view.*;
+import android.content.*;
 
 
 // Todo over a certain treshold, change calibration factor 
@@ -75,14 +77,6 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	private Location here,there;
 	protected LocationRequest loreq;
 	
-	public static class SettingsFragment extends PreferenceFragment{
-		@Override
-		public void onCreate(Bundle savedInstanceState){
-			super.onCreate(savedInstanceState);
-			addPreferencesFromResource(R.xml.preferences);
-		}
-	}
-	
 	
 	@Override
 	public void onConnectionFailed(ConnectionResult p1)
@@ -120,7 +114,31 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 		tvAct.setText(String.valueOf(sourceact));
 	}
 
-	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu)
+	{
+		// TODO: Implement this method
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.mainmenu, menu);
+		return super.onCreateOptionsMenu(menu);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item)
+	{
+		
+switch (item.getItemId()){
+			case R.id.mnuSettings:
+			Intent intent=new Intent();
+			intent.setClass(MainActivity.this,SetPreferenceActivity.class);
+			startActivityForResult(intent,0);
+			return true;
+		}
+		
+		// TODO: Implement this method
+		return super.onOptionsItemSelected(item);
+	}
+
 	
 	
 	
