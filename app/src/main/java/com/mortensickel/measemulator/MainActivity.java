@@ -76,7 +76,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	private GoogleApiClient gac;
 	private Location here,there;
 	protected LocationRequest loreq;
-	
+	private LinearLayout llDebuginfo;
 	
 	@Override
 	public void onConnectionFailed(ConnectionResult p1)
@@ -190,7 +190,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 		gac.disconnect();
 		super.onStop();
 	}
-	//public.void 
+	
 	
     //this  posts a message to the main thread from our timertask
     //and updates the textfield
@@ -306,6 +306,8 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 		there = new Location("dummyprovider");
 		there.setLatitude(59.948509);
 		there.setLongitude(10.602627);
+		llDebuginfo=(LinearLayout)findViewById(R.id.llDebuginfo);
+		llDebuginfo.setVisibility(View.GONE);
 		gac=new GoogleApiClient.Builder(this).addConnectionCallbacks(this).addOnConnectionFailedListener(this).addApi(LocationServices.API).build();
         tvTime = (TextView)findViewById(R.id.tvTime);
         tvPulsedata = (TextView)findViewById(R.id.tvPulsedata);

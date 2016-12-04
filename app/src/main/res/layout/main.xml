@@ -153,7 +153,9 @@
 		android:layout_height="wrap_content"
 		android:gravity="center"
 		android:background="#bbbbbb"
-		android:orientation="vertical">
+		android:orientation="vertical"
+		android:visible="false"
+		android:id="@+id/llDebuginfo">
 
 		<TextView
 			android:layout_height="wrap_content"
