@@ -11,4 +11,6 @@
 	<string name="showLoc">Show location</string>
 	<string name="showDebug">Show debug</string>
 	<string name="background">Background</string>
+	<string name="SourceLocation">Sorce location :</string>
+	<string name="CouldNotGetLocation">Could not get location</string>
 </resources>

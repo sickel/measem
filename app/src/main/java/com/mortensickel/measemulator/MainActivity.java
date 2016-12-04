@@ -133,16 +133,35 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 			case R.id.mnuSaveLoc:
 				saveLocation();
 				return true;
+			case R.id.mnuShowLoc:
+				showLocation();
+				return true;
 		}
 		
 		// TODO: Implement this method
 		return super.onOptionsItemSelected(item);
 	}
 
+	protected void showLocation(){
+		String lat=String.valueOf(there.getLatitude());
+		String lon=String.valueOf(there.getLongitude());
+		Toast.makeText(getApplicationContext(),getString(R.string.SourceLocation)+lat+','+lon, Toast.LENGTH_LONG).show();
+		
+	}
+	
 	
 	protected void saveLocation(){
-		Toast.makeText(getApplicationContext(),"Save location", Toast.LENGTH_LONG).show();
-		
+		Location LastLocation = LocationServices.FusedLocationApi.getLastLocation(
+			gac);
+        if (LastLocation != null) {
+            String lat=String.valueOf(LastLocation.getLatitude());
+            String lon=String.valueOf(LastLocation.getLongitude());
+			Toast.makeText(getApplicationContext(),getString(R.string.SourceLocation)+lat+','+lon, Toast.LENGTH_LONG).show();
+		    there=LastLocation;
+        }else{
+			Toast.makeText(getApplicationContext(),getString(R.string.CouldNotGetLocation), Toast.LENGTH_LONG).show();	
+		}
+    
 	}
 	
 	@Override
