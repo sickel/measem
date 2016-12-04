@@ -95,9 +95,6 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 		if(loreq==null){
 			createLocationRequest();
 		}
-		there = new Location("dummyprovider");
-		there.setLatitude(59.948509);
-		there.setLongitude(10.602627);
 		LocationServices.FusedLocationApi.requestLocationUpdates(gac,loreq,this);
 	}
 	
@@ -127,12 +124,15 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	public boolean onOptionsItemSelected(MenuItem item)
 	{
 		
-switch (item.getItemId()){
+		switch (item.getItemId()){
 			case R.id.mnuSettings:
-			Intent intent=new Intent();
-			intent.setClass(MainActivity.this,SetPreferenceActivity.class);
-			startActivityForResult(intent,0);
-			return true;
+				Intent intent=new Intent();
+				intent.setClass(MainActivity.this,SetPreferenceActivity.class);
+				startActivityForResult(intent,0);
+				return true;
+			case R.id.mnuSaveLoc:
+				saveLocation();
+				return true;
 		}
 		
 		// TODO: Implement this method
@@ -140,14 +140,16 @@ switch (item.getItemId()){
 	}
 
 	
-	
+	protected void saveLocation(){
+		Toast.makeText(getApplicationContext(),"Save location", Toast.LENGTH_LONG).show();
+		
+	}
 	
 	@Override
 	public void onConnected(Bundle p1)
 	{
 		Location loc = LocationServices.FusedLocationApi.getLastLocation(gac);
 		if(loc != null){
-			//Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " +String.valueOf(loc.getLatitude()) + "\nLong: " + String.valueOf(loc.getLongitude()), Toast.LENGTH_LONG).show();
 			here=loc;
 		}
 		// TODO: Implement this method
@@ -282,6 +284,9 @@ switch (item.getItemId()){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 		context=this;
+		there = new Location("dummyprovider");
+		there.setLatitude(59.948509);
+		there.setLongitude(10.602627);
 		gac=new GoogleApiClient.Builder(this).addConnectionCallbacks(this).addOnConnectionFailedListener(this).addApi(LocationServices.API).build();
         tvTime = (TextView)findViewById(R.id.tvTime);
         tvPulsedata = (TextView)findViewById(R.id.tvPulsedata);

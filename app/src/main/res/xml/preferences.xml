@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 <CheckBoxPreference
-	android:key="testCb"
-	android:title="test"
-	android:summary="test summ"
-	android:defaultValue="true" />
+	android:key="showDebug"
+	android:title="string/showDebug"
+	android:summary="@string/blank"
+	android:defaultValue="false" />
+<EditTextPreference
+	android:key="backgroundValue"
+	android:title="@string/background"
+	android:summary="@string/blank"
+	android:defaultValue="2"
+/>
 </PreferenceScreen>

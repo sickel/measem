@@ -88,7 +88,7 @@
 			android:layout_height="50dp"
 			android:layout_width="50dp"
 			android:orientation="horizontal"
-			android:background="@drawable/ic_launcher"
+			android:background="@drawable/bulb"
 			android:layout_alignParentRight="true"/>
 		
 	</RelativeLayout>
@@ -144,7 +144,7 @@
 			android:layout_height="50dp"
 			android:layout_width="50dp"
 			android:orientation="horizontal"
-			android:background="@drawable/ic_launcher"
+			android:background="@drawable/speaker"
 			android:layout_alignParentRight="true"/>
 
 	</RelativeLayout>
