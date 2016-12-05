@@ -164,8 +164,14 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
         if (LastLocation != null) {
             String lat=String.valueOf(LastLocation.getLatitude());
             String lon=String.valueOf(LastLocation.getLongitude());
+			
 			Toast.makeText(getApplicationContext(),getString(R.string.SourceLocation)+lat+','+lon, Toast.LENGTH_LONG).show();
 		    there=LastLocation;
+			SharedPreferences sp=this.getPreferences(Context.MODE_PRIVATE);
+			SharedPreferences.Editor ed=sp.edit();
+			ed.putString("Latitude",lat);
+			ed.putString("Longitude",lon);
+			ed.commit();
         }else{
 			Toast.makeText(getApplicationContext(),getString(R.string.CouldNotGetLocation), Toast.LENGTH_LONG).show();	
 		}
@@ -303,6 +309,35 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
         }
 	};
 	
+	@Override
+	protected void onResume()
+	{
+		// TODO: Implement this method
+		super.onResume();
+		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+		//		lowprobCutoff = (double)sharedPref.getFloat("pref_key_lowprobcutoff", 1)/100;
+		readPrefs();
+		//XlowprobCutoff=
+	}
+	
+	private void readPrefs(){
+		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+		String ret=sharedPref.getString("Latitude", "1");
+		Double lat= Double.parseDouble(ret);
+		ret=sharedPref.getString("Longitude", "1");
+		Double lon= Double.parseDouble(ret);
+		there.setLatitude(lat);
+		there.setLongitude(lon);
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data)
+	{
+		super.onActivityResult(requestCode, resultCode, data);
+		readPrefs();
+	}  
+	
+	
 	
 	
 	Timer timer = new Timer();
@@ -311,6 +346,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 		context=this;
+		loadPref(context);
 		/*SharedPreferences sharedPref = context.getPreferences(Context.MODE_PRIVATE);
 		double lat = getResources().get;
 		long highScore = sharedPref.getInt(getString(R.string.saved_high_score), defaultValue);
@@ -430,6 +466,15 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
         Button b = (Button)findViewById(R.id.button);
         b.setText("start");
     }
+	
+	
+	public void loadPref(Context ctx){
+		SharedPreferences shpref=PreferenceManager.getDefaultSharedPreferences(ctx);
+		PreferenceManager.setDefaultValues(ctx, R.xml.preferences, false);
+	}
+
+	
+	
 	
 	
 	public void modechange(View v){
