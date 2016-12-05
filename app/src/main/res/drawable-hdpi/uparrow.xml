@@ -1,16 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape
-	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:shape="rectangle">
 
 	<!-- Specify a semi-transparent solid green background color -->
 	
 
-	<!-- Specify a dark green border -->
+	<!-- Specify a dark green border 
 	<stroke 
 		android:width="5dp"
-		android:color="#ffa500" />
+		android:color="#ffa500" /> -->
 
-	<!-- Specify the margins that all content inside the drawable must adhere to -->
 
-</shape>  
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+	android:width="32dp"
+	android:height="32dp"
+	android:viewportWidth="32.0"
+	android:viewportHeight="32.0">
+	<path
+		android:pathData="M10 32 L22 32 L22 20 L32 20 L16 7 L0 20 L10 20 L10 32 Z"
+	android:strokeWidth="2"
+	android:fillColor="#00000000"
+	android:strokeColor="#ffa500"/>
+</vector>

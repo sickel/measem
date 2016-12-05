@@ -1,4 +1,6 @@
 package com.mortensickel.measemulator;
+// http://maps.google.com/maps?q=loc:59.948509,10.602627
+import com.google.android.gms.common.api.*;
 import android.content.Context;
 import android.text.*;
 import android.app.Activity;
@@ -23,15 +25,20 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.*;
 import android.view.View.*;
-import android.location.*;
+import android.location.Location;
 import android.util.Log;
-
+import com.google.android.gms.location.*;
+import com.google.android.gms.common.*;
+import android.preference.*;
+import android.view.*;
+import android.content.*;
+import android.net.Uri;
 
 // Todo over a certain treshold, change calibration factor 
 // TODO settable calibration factor
 // TODO finish icons
-// TODO location
-// TODO input bacground and source. Calculate activity from distance
+// DONE location 
+// DONE input background and source. Calculate activity from distance
 // TODO Use distribution map 
 // TODO add settings menu
 // TODO generic skin
@@ -39,13 +46,13 @@ import android.util.Log;
 
 
 public class MainActivity extends Activity 
+implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,LocationListener
 {
 	/*
 	AUTOMESS:
 	0.44 pps = 0.1uSv/h
 	ca 16. pulser pr nSv
 	*/
-	GPSTracker gps;
 	boolean poweron=false;
 	boolean showdebug=false;
 	long shutdowntime=0;
@@ -54,20 +61,149 @@ public class MainActivity extends Activity
 	long starttime = 0;
 	public long pulses=0;
 	Integer mode=0;
-	final Integer MAXMODE=2;
+	final Integer MAXMODE=3;
 	final int MODE_OFF=0;
-	final int MODE_DOSERATE=1;
-	final int MODE_DOSE=2;
+	final int MODE_MOMENTANDOSE=1;
+	final int MODE_DOSERATE=2;
+	final int MODE_DOSE=3;
 	public final String TAG="measem";
 	double calibration=4.4;
 	public Integer sourceact=1;
+	protected long lastpulses=0;
 	public boolean gpsenabled = true;
-	private LocationManager locationManager=null;
-	private LocationListener locationListener=null; 
 	public Context context;
-	public Integer gpsinterval=5000;
+	public Integer gpsinterval=2000;
+	private GoogleApiClient gac;
+	private Location here,there;
+	protected LocationRequest loreq;
+	private LinearLayout llDebuginfo;
+	
+	@Override
+	public void onConnectionFailed(ConnectionResult p1)
+	{
+		// TODO: Implement this method
+	}
+
+	protected void createLocationRequest(){
+		loreq = new LocationRequest();
+		loreq.setInterval(gpsinterval);
+		loreq.setFastestInterval(100);
+		loreq.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+	}
+	
+	protected void startLocationUpdates(){
+		if(loreq==null){
+			createLocationRequest();
+		}
+		LocationServices.FusedLocationApi.requestLocationUpdates(gac,loreq,this);
+	}
+	
+	public void ConnectionCallbacks(){
+		
+	}
+
+	@Override
+	public void onLocationChanged(Location p1)
+	{
+		here=p1;
+		double distance=here.distanceTo(there);
+		sourceact=(int)Math.round(2.0+1000.0/(distance*distance));
+		tvAct.setText(String.valueOf(sourceact));
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu)
+	{
+		// TODO: Implement this method
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.mainmenu, menu);
+		return super.onCreateOptionsMenu(menu);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item)
+	{
+		
+		switch (item.getItemId()){
+			case R.id.mnuSettings:
+				Intent intent=new Intent();
+				intent.setClass(MainActivity.this,SetPreferenceActivity.class);
+				startActivityForResult(intent,0);
+				return true;
+			case R.id.mnuSaveLoc:
+				saveLocation();
+				return true;
+			case R.id.mnuShowLoc:
+				showLocation();
+				return true;
+		}
+		
+		// TODO: Implement this method
+		return super.onOptionsItemSelected(item);
+	}
+
+	protected void showLocation(){
+		String lat=String.valueOf(there.getLatitude());
+		String lon=String.valueOf(there.getLongitude());
+		Toast.makeText(getApplicationContext(),getString(R.string.SourceLocation)+lat+','+lon, Toast.LENGTH_LONG).show();
+		try {
+			Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://maps.google.com/maps?q=loc:"+lat+","+lon));
+			startActivity(myIntent);
+		} catch (ActivityNotFoundException e) {
+			Toast.makeText(this, "No application can handle this request."
+						   + " Please install a webbrowser",  Toast.LENGTH_LONG).show();
+			e.printStackTrace();
+		}
+		
+	}
 	
 	
+	protected void saveLocation(){
+		Location LastLocation = LocationServices.FusedLocationApi.getLastLocation(
+			gac);
+        if (LastLocation != null) {
+            String lat=String.valueOf(LastLocation.getLatitude());
+            String lon=String.valueOf(LastLocation.getLongitude());
+			
+			Toast.makeText(getApplicationContext(),getString(R.string.SourceLocation)+lat+','+lon, Toast.LENGTH_LONG).show();
+		    there=LastLocation;
+			SharedPreferences sp=this.getPreferences(Context.MODE_PRIVATE);
+			SharedPreferences.Editor ed=sp.edit();
+			ed.putString("Latitude",lat);
+			ed.putString("Longitude",lon);
+			ed.commit();
+        }else{
+			Toast.makeText(getApplicationContext(),getString(R.string.CouldNotGetLocation), Toast.LENGTH_LONG).show();	
+		}
+    
+	}
+	
+	@Override
+	public void onConnected(Bundle p1)
+	{
+		Location loc = LocationServices.FusedLocationApi.getLastLocation(gac);
+		if(loc != null){
+			here=loc;
+		}
+		// TODO: Implement this method
+	}
+
+	@Override
+	public void onConnectionSuspended(int p1)
+	{
+		// TODO: Implement this method
+	}
+
+	protected void onStart(){
+		gac.connect();
+		super.onStart();
+	}
+	
+	
+	protected void onStop(){
+		gac.disconnect();
+		super.onStop();
+	}
 	
 	
     //this  posts a message to the main thread from our timertask
@@ -80,6 +216,14 @@ public class MainActivity extends Activity
 				int seconds = (int) (millis / 1000);
 				if(seconds>0){
 					double display=0;
+					if( mode==MODE_MOMENTANDOSE){
+						if (lastpulses==0 || (lastpulses>pulses)){
+							display=0;
+						}else{
+							display=((pulses-lastpulses)/calibration);
+						}
+						lastpulses=pulses;
+					}
 					if (mode==MODE_DOSERATE){
 						display=(double)pulses/(double)seconds/calibration;
 					}
@@ -113,33 +257,7 @@ public class MainActivity extends Activity
         }
     };
     
-	Handler gpsHandler = new Handler();
-	Runnable gpsRun=new Runnable(){
-		@Override
-		public void run(){
-			//locationListener = new MyLocationListener();
-
-			//locationManager.requestLocationUpdates(LocationManager .GPS_PROVIDER, 5000, 10,locationListener);
-			gps = new GPSTracker(context);
-
-			// Check if GPS enabled
-			if(gps.canGetLocation()) {
-
-				double latitude = gps.getLatitude();
-				double longitude = gps.getLongitude();
-
-				// \n is for new line
-				Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
-			} else {
-				// Can't get location.
-				// GPS or network is not enabled.
-				// Ask user to enable GPS/network in settings.
-				gps.showSettingsAlert();
-			}
-		//	Toast.makeText(context,"Location testing2",Toast.LENGTH_SHORT).show();
-			gpsHandler.postDelayed(gpsRun,gpsinterval);
-		}
-	};
+	
 	
 	public Integer getInterval(){
 		Integer act=sourceact;
@@ -191,6 +309,35 @@ public class MainActivity extends Activity
         }
 	};
 	
+	@Override
+	protected void onResume()
+	{
+		// TODO: Implement this method
+		super.onResume();
+		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+		//		lowprobCutoff = (double)sharedPref.getFloat("pref_key_lowprobcutoff", 1)/100;
+		readPrefs();
+		//XlowprobCutoff=
+	}
+	
+	private void readPrefs(){
+		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+		String ret=sharedPref.getString("Latitude", "1");
+		Double lat= Double.parseDouble(ret);
+		ret=sharedPref.getString("Longitude", "1");
+		Double lon= Double.parseDouble(ret);
+		there.setLatitude(lat);
+		there.setLongitude(lon);
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data)
+	{
+		super.onActivityResult(requestCode, resultCode, data);
+		readPrefs();
+	}  
+	
+	
 	
 	
 	Timer timer = new Timer();
@@ -199,6 +346,20 @@ public class MainActivity extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 		context=this;
+		loadPref(context);
+		/*SharedPreferences sharedPref = context.getPreferences(Context.MODE_PRIVATE);
+		double lat = getResources().get;
+		long highScore = sharedPref.getInt(getString(R.string.saved_high_score), defaultValue);
+		
+		SharedPreferences sharedPref = context.getPreferences(Context.MODE_PRIVATE);
+			// getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+		*/
+		there = new Location("dummyprovider");
+		there.setLatitude(59.948509);
+		there.setLongitude(10.602627);
+		llDebuginfo=(LinearLayout)findViewById(R.id.llDebuginfo);
+		llDebuginfo.setVisibility(View.GONE);
+		gac=new GoogleApiClient.Builder(this).addConnectionCallbacks(this).addOnConnectionFailedListener(this).addApi(LocationServices.API).build();
         tvTime = (TextView)findViewById(R.id.tvTime);
         tvPulsedata = (TextView)findViewById(R.id.tvPulsedata);
         tvPause = (TextView)findViewById(R.id.tvPause);
@@ -261,7 +422,6 @@ public class MainActivity extends Activity
 				timer.cancel();
 				timer.purge();
 				h2.removeCallbacks(run);
-				gpsHandler.removeCallbacks(gpsRun);
 				pulses=0;
 				poweron=false;
 				mode=MODE_OFF;
@@ -273,8 +433,8 @@ public class MainActivity extends Activity
 			shutdowntime=0;
 			starttime = System.currentTimeMillis();
 			timer = new Timer();
-			timer.schedule(new firstTask(), 0,500);
-			gpsHandler.postDelayed(gpsRun,gpsinterval);
+			timer.schedule(new firstTask(), 0,500); 
+			startLocationUpdates();
 			h2.postDelayed(run, pause(getInterval()));
 			mode=1;
 			switchMode(mode);
@@ -294,8 +454,7 @@ public class MainActivity extends Activity
 		public void onClick(View v) {
 			showdebug=!showdebug;
 		}});	
-		locationManager = (LocationManager) 
-		getSystemService(Context.LOCATION_SERVICE);
+	
 		
 	}
   	@Override
@@ -307,6 +466,15 @@ public class MainActivity extends Activity
         Button b = (Button)findViewById(R.id.button);
         b.setText("start");
     }
+	
+	
+	public void loadPref(Context ctx){
+		SharedPreferences shpref=PreferenceManager.getDefaultSharedPreferences(ctx);
+		PreferenceManager.setDefaultValues(ctx, R.xml.preferences, false);
+	}
+
+	
+	
 	
 	
 	public void modechange(View v){
@@ -321,6 +489,7 @@ public class MainActivity extends Activity
 	public void switchMode(int mode){
 		int unit=0;
 		switch(mode){
+			case MODE_MOMENTANDOSE:
 			case MODE_DOSERATE:
 				unit = R.string.ugyh;
 				break;
@@ -336,62 +505,5 @@ public class MainActivity extends Activity
 		tv.setText(unit);
 	}
 	
-	// from http://rdcworld-android.blogspot.no/2012/01/get-current-location-coordinates-city.html?m=1
-	/*----------Listener class to get coordinates ------------- */
-	private class MyLocationListener implements LocationListener {
-       
-		private Location currentBestLocation = null;
-		
-		@Override
-        public void onLocationChanged(Location loc) {
-
-            
-            Toast.makeText(getBaseContext(),"Location changed : Lat: " +
-						   loc.getLatitude()+ " Lng: " + loc.getLongitude(),
-						   Toast.LENGTH_SHORT).show();
-            String longitude = "Longitude: " +loc.getLongitude();  
-			Log.v(TAG, longitude);
-			String latitude = "Latitude: " +loc.getLatitude();
-			Log.v(TAG, latitude);
-
-			       }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-            // TODO Auto-generated method stub         
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-            // TODO Auto-generated method stub         
-        }
-
-        @Override
-        public void onStatusChanged(String provider, 
-									int status, Bundle extras) {
-            // TODO Auto-generated method stub         
-        }
-    
-	}
 	
-	/*private Location getLastBestLocation() {
-		Location locationGPS = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-		Location locationNet = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-
-		long GPSLocationTime = 0;
-		if (null != locationGPS) { GPSLocationTime = locationGPS.getTime(); }
-
-		long NetLocationTime = 0;
-
-		if (null != locationNet) {
-			NetLocationTime = locationNet.getTime();
-		}
-
-		if ( 0 < GPSLocationTime - NetLocationTime ) {
-			return locationGPS;
-		}
-		else {
-			return locationNet;
-		}
-	}*/
 }
