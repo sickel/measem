@@ -33,6 +33,7 @@ import android.preference.*;
 import android.view.*;
 import android.content.*;
 import android.net.Uri;
+import org.apache.http.impl.execchain.*;
 
 // Todo over a certain treshold, change calibration factor 
 // TODO settable calibration factor
@@ -77,7 +78,8 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	private Location here,there;
 	protected LocationRequest loreq;
 	private LinearLayout llDebuginfo;
-	
+	private Double background=0.0;
+	private float sourcestrength=1000;
 	@Override
 	public void onConnectionFailed(ConnectionResult p1)
 	{
@@ -107,7 +109,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	{
 		here=p1;
 		double distance=here.distanceTo(there);
-		sourceact=(int)Math.round(2.0+1000.0/(distance*distance));
+		sourceact=(int)Math.round(background+sourcestrength/(distance*distance));
 		tvAct.setText(String.valueOf(sourceact));
 	}
 
@@ -150,8 +152,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 			Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://maps.google.com/maps?q=loc:"+lat+","+lon));
 			startActivity(myIntent);
 		} catch (ActivityNotFoundException e) {
-			Toast.makeText(this, "No application can handle this request."
-						   + " Please install a webbrowser",  Toast.LENGTH_LONG).show();
+			Toast.makeText(this, "No application can handle this request.",Toast.LENGTH_LONG).show();
 			e.printStackTrace();
 		}
 		
@@ -167,10 +168,13 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 			
 			Toast.makeText(getApplicationContext(),getString(R.string.SourceLocation)+lat+','+lon, Toast.LENGTH_LONG).show();
 		    there=LastLocation;
-			SharedPreferences sp=this.getPreferences(Context.MODE_PRIVATE);
+			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+			
+			//SharedPreferences sp=this.getPreferences(Context.MODE_PRIVATE);
 			SharedPreferences.Editor ed=sp.edit();
 			ed.putString("Latitude",lat);
 			ed.putString("Longitude",lon);
+			ed.apply();
 			ed.commit();
         }else{
 			Toast.makeText(getApplicationContext(),getString(R.string.CouldNotGetLocation), Toast.LENGTH_LONG).show();	
@@ -185,7 +189,6 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 		if(loc != null){
 			here=loc;
 		}
-		// TODO: Implement this method
 	}
 
 	@Override
@@ -328,6 +331,9 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 		Double lon= Double.parseDouble(ret);
 		there.setLatitude(lat);
 		there.setLongitude(lon);
+		ret=sharedPref.getString("backgroundValue", "1");
+		background= Double.parseDouble(ret);
+		
 	}
 
 	@Override
