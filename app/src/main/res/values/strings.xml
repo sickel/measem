@@ -13,4 +13,6 @@
 	<string name="background">Background</string>
 	<string name="SourceLocation">Sorce location :</string>
 	<string name="CouldNotGetLocation">Could not get location</string>
-</resources>
+	<string name="latitude">Latitude (N)</string>
+	<string name="longitude">Longitude (E)</string>
+	</resources>

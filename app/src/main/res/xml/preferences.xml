@@ -2,7 +2,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 <CheckBoxPreference
 	android:key="showDebug"
-	android:title="string/showDebug"
+	android:title="@string/showDebug"
 	android:summary="@string/blank"
 	android:defaultValue="false" />
 <EditTextPreference
@@ -11,4 +11,16 @@
 	android:summary="@string/blank"
 	android:defaultValue="2"
 />
+	<EditTextPreference
+		android:key="Latitude"
+		android:title="@string/latitude"
+		android:summary="@string/blank"
+		android:defaultValue="59.948509"
+	/>
+	<EditTextPreference
+		android:key="Longitude"
+		android:title="@string/longitude"
+		android:summary="@string/blank"
+		android:defaultValue="10.602627"
+	/>
 </PreferenceScreen>

@@ -32,13 +32,13 @@ import com.google.android.gms.common.*;
 import android.preference.*;
 import android.view.*;
 import android.content.*;
-
+import android.net.Uri;
 
 // Todo over a certain treshold, change calibration factor 
 // TODO settable calibration factor
 // TODO finish icons
 // DONE location 
-// TODO input background and source. Calculate activity from distance
+// DONE input background and source. Calculate activity from distance
 // TODO Use distribution map 
 // TODO add settings menu
 // TODO generic skin
@@ -146,6 +146,14 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 		String lat=String.valueOf(there.getLatitude());
 		String lon=String.valueOf(there.getLongitude());
 		Toast.makeText(getApplicationContext(),getString(R.string.SourceLocation)+lat+','+lon, Toast.LENGTH_LONG).show();
+		try {
+			Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://maps.google.com/maps?q=loc:"+lat+","+lon));
+			startActivity(myIntent);
+		} catch (ActivityNotFoundException e) {
+			Toast.makeText(this, "No application can handle this request."
+						   + " Please install a webbrowser",  Toast.LENGTH_LONG).show();
+			e.printStackTrace();
+		}
 		
 	}
 	
@@ -303,6 +311,13 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 		context=this;
+		/*SharedPreferences sharedPref = context.getPreferences(Context.MODE_PRIVATE);
+		double lat = getResources().get;
+		long highScore = sharedPref.getInt(getString(R.string.saved_high_score), defaultValue);
+		
+		SharedPreferences sharedPref = context.getPreferences(Context.MODE_PRIVATE);
+			// getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+		*/
 		there = new Location("dummyprovider");
 		there.setLatitude(59.948509);
 		there.setLongitude(10.602627);
