@@ -33,7 +33,7 @@ import android.preference.*;
 import android.view.*;
 import android.content.*;
 import android.net.Uri;
-import org.apache.http.impl.execchain.*;
+// import org.apache.http.impl.execchain.*;
 
 // Todo over a certain treshold, change calibration factor 
 // TODO settable calibration factor
@@ -308,7 +308,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
         public void run() {
             h.sendEmptyMessage(0);
         }
-	};
+	}
 	
 	@Override
 	protected void onResume()

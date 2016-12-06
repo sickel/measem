@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Measurement Emulator</string>
+    <string name="background">Background</string>
+    <string name="CouldNotGetLocation">Could not get location</string>
+    <string name="SourceLocation">Sorce location :</string>
+    <string name="activity">Activity</string>
+    <string name="latitude">Latitude (N)</string>
+    <string name="longitude">Longitude (E)</string>
+    <string name="blank">" "</string>
+    <string name="saveLoc">Save location</string>
+    <string name="settings">Settings</string>
+    <string name="showDebug">Show debug</string>
+    <string name="showLoc">Show location</string>
+    <string name="ugy">μGy</string>
+    <string name="ugyh">μGy/h</string>
+    <string name="ugyhint">μGy/h (int)</string>
+</resources>

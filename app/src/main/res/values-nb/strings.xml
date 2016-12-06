@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Measurement Emulator</string>
+    <string name="CouldNotGetLocation">Finner ikke posisjon</string>
+    <string name="SourceLocation">Kildeposisjon :</string>
+    <string name="activity">Aktivitet</string>
+    <string name="background">Bakgrunn</string>
+    <string name="blank">\" \"</string>
+    <string name="latitude">Lengdegrad (N)</string>
+    <string name="longitude">Breddegrad (Ø)</string>
+    <string name="saveLoc">Lagre posisjon</string>
+    <string name="settings">Innstillinger</string>
+    <string name="showDebug">Vis debug</string>
+    <string name="showLoc">Vis posisjon</string>
+    <string name="ugy">μGy</string>
+    <string name="ugyh">μGy/h</string>
+    <string name="ugyhint">μGy/h (int)</string>
+</resources>

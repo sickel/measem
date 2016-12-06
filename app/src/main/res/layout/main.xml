@@ -12,7 +12,7 @@
 		android:layout_width="wrap_content"
 		android:orientation="vertical"
 		android:background="#889999"
-		android:id="@+id/lLActivity"
+		android:id="@+id/lLBackground"
 		>
 		<TextView
 			android:gravity="center_horizontal"
