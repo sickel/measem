@@ -55,7 +55,6 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	ca 16. pulser pr nSv
 	*/
 	boolean poweron=false;
-	boolean showdebug=false;
 	long shutdowntime=0;
 	long meastime;
 	TextView tvTime,tvPulsedata, tvPause,tvAct, tvDoserate;
@@ -80,6 +79,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	private LinearLayout llDebuginfo;
 	private Double background=0.0;
 	private float sourcestrength=1000;
+	private boolean showDebug=false;
 	@Override
 	public void onConnectionFailed(ConnectionResult p1)
 	{
@@ -233,7 +233,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 					}
 					tvDoserate.setText(String.format("%.2f",display));
 				}
-				if(showdebug){
+				if(showDebug){
 					int minutes = seconds / 60;
 					seconds     = seconds % 60;
 					tvTime.setText(String.format("%d:%02d", minutes, seconds));			
@@ -251,7 +251,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
         public void run() {
 			long pause=pause(getInterval());
 			h2.postDelayed(run,pause);
-			if(showdebug){
+			if(showDebug){
 				tvPause.setText(String.format("%d",pause));
 			}
 			receivepulse();
@@ -296,7 +296,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 		myText.startAnimation(anim);
 		pulses++;
 		Double sdev=Math.sqrt(pulses);
-		if(showdebug){
+		if(showDebug){
 		tvPulsedata.setText(String.format("%d - %.1f - %.0f %%",pulses,sdev,sdev/pulses*100));
 		}
 	}
@@ -323,15 +323,16 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	
 	private void readPrefs(){
 		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-		String ret=sharedPref.getString("Latitude", "1");
+		String ret=sharedPref.getString("Latitude", "10");
 		Double lat= Double.parseDouble(ret);
-		ret=sharedPref.getString("Longitude", "1");
+		ret=sharedPref.getString("Longitude", "60");
 		Double lon= Double.parseDouble(ret);
 		there.setLatitude(lat);
 		there.setLongitude(lon);
 		ret=sharedPref.getString("backgroundValue", "1");
 		background= Double.parseDouble(ret)/200;
-		
+		showDebug=sharedPref.getBoolean("showDebug", false);
+		debugVisible(showDebug);
 	}
 
 	@Override
@@ -430,7 +431,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	b.setOnClickListener(new View.OnClickListener() {
 		@Override
 		public void onClick(View v) {
-			showdebug=!showdebug;
+			showDebug=!showDebug;
 		}});	
 	
 		
@@ -442,16 +443,21 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
         timer.purge();
         h2.removeCallbacks(run);
     }
+
+	private void debugVisible(Boolean show){
+		View debug=findViewById(R.id.llDebuginfo);
+		if(show){
+			debug.setVisibility(View.VISIBLE);
+		}else{
+			debug.setVisibility(View.GONE);
+		}
+	}
 	
 	
 	public void loadPref(Context ctx){
 		//SharedPreferences shpref=PreferenceManager.getDefaultSharedPreferences(ctx);
 		PreferenceManager.setDefaultValues(ctx, R.xml.preferences, false);
 	}
-
-	
-	
-	
 	
 	public void modechange(View v){
 		if(mode > 0){
