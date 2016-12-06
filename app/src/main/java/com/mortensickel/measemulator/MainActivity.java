@@ -33,6 +33,7 @@ import android.preference.*;
 import android.view.*;
 import android.content.*;
 import android.net.Uri;
+import org.apache.http.impl.execchain.*;
 
 // Todo over a certain treshold, change calibration factor 
 // TODO settable calibration factor
@@ -54,7 +55,6 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	ca 16. pulser pr nSv
 	*/
 	boolean poweron=false;
-	boolean showdebug=false;
 	long shutdowntime=0;
 	long meastime;
 	TextView tvTime,tvPulsedata, tvPause,tvAct, tvDoserate;
@@ -77,7 +77,9 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	private Location here,there;
 	protected LocationRequest loreq;
 	private LinearLayout llDebuginfo;
-	
+	private Double background=0.0;
+	private float sourcestrength=1000;
+	private boolean showDebug=false;
 	@Override
 	public void onConnectionFailed(ConnectionResult p1)
 	{
@@ -107,7 +109,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	{
 		here=p1;
 		double distance=here.distanceTo(there);
-		sourceact=(int)Math.round(2.0+1000.0/(distance*distance));
+		sourceact=(int)Math.round(background+sourcestrength/(distance*distance));
 		tvAct.setText(String.valueOf(sourceact));
 	}
 
@@ -137,8 +139,6 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 				showLocation();
 				return true;
 		}
-		
-		// TODO: Implement this method
 		return super.onOptionsItemSelected(item);
 	}
 
@@ -150,8 +150,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 			Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://maps.google.com/maps?q=loc:"+lat+","+lon));
 			startActivity(myIntent);
 		} catch (ActivityNotFoundException e) {
-			Toast.makeText(this, "No application can handle this request."
-						   + " Please install a webbrowser",  Toast.LENGTH_LONG).show();
+			Toast.makeText(this, "No application can handle this request.",Toast.LENGTH_LONG).show();
 			e.printStackTrace();
 		}
 		
@@ -167,10 +166,13 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 			
 			Toast.makeText(getApplicationContext(),getString(R.string.SourceLocation)+lat+','+lon, Toast.LENGTH_LONG).show();
 		    there=LastLocation;
-			SharedPreferences sp=this.getPreferences(Context.MODE_PRIVATE);
+			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+			
+			//SharedPreferences sp=this.getPreferences(Context.MODE_PRIVATE);
 			SharedPreferences.Editor ed=sp.edit();
 			ed.putString("Latitude",lat);
 			ed.putString("Longitude",lon);
+			ed.apply();
 			ed.commit();
         }else{
 			Toast.makeText(getApplicationContext(),getString(R.string.CouldNotGetLocation), Toast.LENGTH_LONG).show();	
@@ -185,7 +187,6 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 		if(loc != null){
 			here=loc;
 		}
-		// TODO: Implement this method
 	}
 
 	@Override
@@ -232,7 +233,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 					}
 					tvDoserate.setText(String.format("%.2f",display));
 				}
-				if(showdebug){
+				if(showDebug){
 					int minutes = seconds / 60;
 					seconds     = seconds % 60;
 					tvTime.setText(String.format("%d:%02d", minutes, seconds));			
@@ -250,7 +251,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
         public void run() {
 			long pause=pause(getInterval());
 			h2.postDelayed(run,pause);
-			if(showdebug){
+			if(showDebug){
 				tvPause.setText(String.format("%d",pause));
 			}
 			receivepulse();
@@ -295,7 +296,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 		myText.startAnimation(anim);
 		pulses++;
 		Double sdev=Math.sqrt(pulses);
-		if(showdebug){
+		if(showDebug){
 		tvPulsedata.setText(String.format("%d - %.1f - %.0f %%",pulses,sdev,sdev/pulses*100));
 		}
 	}
@@ -322,12 +323,16 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	
 	private void readPrefs(){
 		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-		String ret=sharedPref.getString("Latitude", "1");
+		String ret=sharedPref.getString("Latitude", "10");
 		Double lat= Double.parseDouble(ret);
-		ret=sharedPref.getString("Longitude", "1");
+		ret=sharedPref.getString("Longitude", "60");
 		Double lon= Double.parseDouble(ret);
 		there.setLatitude(lat);
 		there.setLongitude(lon);
+		ret=sharedPref.getString("backgroundValue", "1");
+		background= Double.parseDouble(ret)/200;
+		showDebug=sharedPref.getBoolean("showDebug", false);
+		debugVisible(showDebug);
 	}
 
 	@Override
@@ -386,36 +391,10 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 				}
 			});
         switchMode(mode);
-		Button b = (Button)findViewById(R.id.button);
-        b.setText("start");
-        b.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				Button b = (Button)v;
-				if(poweron){
-					timer.cancel();
-					timer.purge();
-					h2.removeCallbacks(run);
-					pulses=0;
-					b.setText("start");
-					poweron=false;
-				}else{
-					starttime = System.currentTimeMillis();
-					timer = new Timer();
-					timer.schedule(new firstTask(), 0,500);
-					h2.postDelayed(run, pause(getInterval()));
-					b.setText("stop");
-					poweron=true;
-				}
-			}
-		});
-    
-
-    b = (Button)findViewById(R.id.btPower);
+    Button b = (Button)findViewById(R.id.btPower);
 	b.setOnClickListener(new View.OnClickListener() {
 	@Override
 	public void onClick(View v) {
-		//Button b = (Button)v;
 		if(poweron){
 			long now=System.currentTimeMillis();
 			if(now> shutdowntime && now < shutdowntime+500){
@@ -452,7 +431,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	b.setOnClickListener(new View.OnClickListener() {
 		@Override
 		public void onClick(View v) {
-			showdebug=!showdebug;
+			showDebug=!showDebug;
 		}});	
 	
 		
@@ -463,19 +442,22 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
         timer.cancel();
         timer.purge();
         h2.removeCallbacks(run);
-        Button b = (Button)findViewById(R.id.button);
-        b.setText("start");
     }
+
+	private void debugVisible(Boolean show){
+		View debug=findViewById(R.id.llDebuginfo);
+		if(show){
+			debug.setVisibility(View.VISIBLE);
+		}else{
+			debug.setVisibility(View.GONE);
+		}
+	}
 	
 	
 	public void loadPref(Context ctx){
-		SharedPreferences shpref=PreferenceManager.getDefaultSharedPreferences(ctx);
+		//SharedPreferences shpref=PreferenceManager.getDefaultSharedPreferences(ctx);
 		PreferenceManager.setDefaultValues(ctx, R.xml.preferences, false);
 	}
-
-	
-	
-	
 	
 	public void modechange(View v){
 		if(mode > 0){
@@ -490,8 +472,10 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 		int unit=0;
 		switch(mode){
 			case MODE_MOMENTANDOSE:
+				unit= R.string.ugyh;
+				break;
 			case MODE_DOSERATE:
-				unit = R.string.ugyh;
+				unit = R.string.ugyhint;
 				break;
 			case MODE_DOSE:
 				unit = R.string.ugy;
