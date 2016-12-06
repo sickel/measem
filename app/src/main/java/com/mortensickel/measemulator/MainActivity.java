@@ -139,8 +139,6 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 				showLocation();
 				return true;
 		}
-		
-		// TODO: Implement this method
 		return super.onOptionsItemSelected(item);
 	}
 
@@ -332,7 +330,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 		there.setLatitude(lat);
 		there.setLongitude(lon);
 		ret=sharedPref.getString("backgroundValue", "1");
-		background= Double.parseDouble(ret);
+		background= Double.parseDouble(ret)/200;
 		
 	}
 
@@ -392,36 +390,10 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 				}
 			});
         switchMode(mode);
-		Button b = (Button)findViewById(R.id.button);
-        b.setText("start");
-        b.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				Button b = (Button)v;
-				if(poweron){
-					timer.cancel();
-					timer.purge();
-					h2.removeCallbacks(run);
-					pulses=0;
-					b.setText("start");
-					poweron=false;
-				}else{
-					starttime = System.currentTimeMillis();
-					timer = new Timer();
-					timer.schedule(new firstTask(), 0,500);
-					h2.postDelayed(run, pause(getInterval()));
-					b.setText("stop");
-					poweron=true;
-				}
-			}
-		});
-    
-
-    b = (Button)findViewById(R.id.btPower);
+    Button b = (Button)findViewById(R.id.btPower);
 	b.setOnClickListener(new View.OnClickListener() {
 	@Override
 	public void onClick(View v) {
-		//Button b = (Button)v;
 		if(poweron){
 			long now=System.currentTimeMillis();
 			if(now> shutdowntime && now < shutdowntime+500){
@@ -469,13 +441,11 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
         timer.cancel();
         timer.purge();
         h2.removeCallbacks(run);
-        Button b = (Button)findViewById(R.id.button);
-        b.setText("start");
     }
 	
 	
 	public void loadPref(Context ctx){
-		SharedPreferences shpref=PreferenceManager.getDefaultSharedPreferences(ctx);
+		//SharedPreferences shpref=PreferenceManager.getDefaultSharedPreferences(ctx);
 		PreferenceManager.setDefaultValues(ctx, R.xml.preferences, false);
 	}
 
@@ -496,8 +466,10 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 		int unit=0;
 		switch(mode){
 			case MODE_MOMENTANDOSE:
+				unit= R.string.ugyh;
+				break;
 			case MODE_DOSERATE:
-				unit = R.string.ugyh;
+				unit = R.string.ugyhint;
 				break;
 			case MODE_DOSE:
 				unit = R.string.ugy;

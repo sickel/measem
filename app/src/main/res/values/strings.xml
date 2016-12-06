@@ -4,6 +4,7 @@
     <string name="app_name">Measurement Emulator</string>
     <string name="activity">Activity</string>
 	<string name="ugyh">μGy/h</string>
+	<string name="ugyhint">μGy/h (int)</string>
 	<string name="ugy">μGy</string>
 	<string name="blank"></string>
 	<string name="settings">Settings</string>
