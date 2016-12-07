@@ -41,9 +41,9 @@ import org.apache.http.impl.execchain.*;
 // DONE location 
 // DONE input background and source. Calculate activity from distance
 // TODO Use distribution map 
-// TODO add settings menu
+// DONE add settings menu
 // TODO generic skin
-// TODO handle shutdown
+// TODO handle pause and shutdown
 
 
 public class MainActivity extends Activity 
@@ -80,12 +80,36 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	private Double background=0.0;
 	private float sourcestrength=1000;
 	private boolean showDebug=false;
+	private final String PULSES="pulses";
+	
+	
 	@Override
 	public void onConnectionFailed(ConnectionResult p1)
 	{
 		// TODO: Implement this method
 	}
 
+	
+	@Override
+	public void onSaveInstanceState(Bundle savedInstanceState) {
+		// Save the user's current game state
+		savedInstanceState.putLong(PULSES,pulses);
+		//savedInstanceState.putInt(PLAYER_LEVEL, mCurrentLevel);
+
+		// Always call the superclass so it can save the view hierarchy state
+		super.onSaveInstanceState(savedInstanceState);
+	}
+	
+	public void onRestoreInstanceState(Bundle savedInstanceState) {
+		// Always call the superclass so it can restore the view hierarchy
+		super.onRestoreInstanceState(savedInstanceState);
+
+		// Restore state members from saved instance
+		pulses = savedInstanceState.getLong(PULSES);
+		//mCurrentLevel = savedInstanceState.getInt(PLAYER_LEVEL);
+	}
+	
+	
 	protected void createLocationRequest(){
 		loreq = new LocationRequest();
 		loreq.setInterval(gpsinterval);
@@ -249,12 +273,13 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	Runnable run = new Runnable() {
         @Override
         public void run() {
+			int n=1;
 			long pause=pause(getInterval());
 			h2.postDelayed(run,pause);
 			if(showDebug){
 				tvPause.setText(String.format("%d",pause));
 			}
-			receivepulse();
+			receivepulse(n);
         }
     };
     
@@ -286,7 +311,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	}
 	
 	
-	public void receivepulse(){
+	public void receivepulse(int n){
 		LinearLayout myText = (LinearLayout) findViewById(R.id.llLed );
 		Animation anim = new AlphaAnimation(0.0f, 1.0f);
 		anim.setDuration(20); //You can manage the time of the blink with this parameter
@@ -294,7 +319,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 		anim.setRepeatMode(Animation.REVERSE);
 		anim.setRepeatCount(0);
 		myText.startAnimation(anim);
-		pulses++;
+		pulses=pulses+1;
 		Double sdev=Math.sqrt(pulses);
 		if(showDebug){
 		tvPulsedata.setText(String.format("%d - %.1f - %.0f %%",pulses,sdev,sdev/pulses*100));
@@ -370,29 +395,61 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
         tvPause = (TextView)findViewById(R.id.tvPause);
 		tvDoserate = (TextView)findViewById(R.id.etDoserate);
 		tvAct=(EditText)findViewById(R.id.activity);
-		tvAct.addTextChangedListener(new TextWatcher() {
-				@Override
-				public void onTextChanged(CharSequence s, int start, int before, int count) {
-					// TODO Auto-generated method stub
-				}
-
-				@Override
-				public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-					// TODO Auto-generated method stub
-				}
-
-				@Override
-				public void afterTextChanged(Editable s) {
-					String act=tvAct.getText().toString();
-					if(act.equals("")){act="1";}
-					sourceact=Integer.parseInt(act);
-					// TODO better errorchecking.
-					// TODO disable if using geolocation
-				}
-			});
+		tvAct.addTextChangedListener(activityTW);
         switchMode(mode);
-    Button b = (Button)findViewById(R.id.btPower);
-	b.setOnClickListener(new View.OnClickListener() {
+  	  	Button b = (Button)findViewById(R.id.btPower);
+		b.setOnClickListener(onOffClick);
+		b=(Button)findViewById(R.id.btMode);
+		b.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				modechange(v);
+			}
+		});
+		b=(Button)findViewById(R.id.btLight);
+		b.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				showDebug=!showDebug;
+			}
+		});		
+	}
+	
+	
+  	@Override
+    public void onPause() {
+        super.onPause();
+        timer.cancel();
+        timer.purge();
+        h2.removeCallbacks(run);
+    }
+
+	TextWatcher activityTW = new TextWatcher() {
+	@Override
+	public void onTextChanged(CharSequence s, int start, int before, int count) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void afterTextChanged(Editable s) {
+		String act=tvAct.getText().toString();
+		if(act.equals("")){act="1";}
+		sourceact=Integer.parseInt(act);
+		// TODO better errorchecking.
+		// TODO disable if using geolocation
+	}};
+	
+	
+	
+	
+	
+	
+	View.OnClickListener  onOffClick = new View.OnClickListener() {
 	@Override
 	public void onClick(View v) {
 		if(poweron){
@@ -407,7 +464,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 				switchMode(mode);
 			}
 			shutdowntime = System.currentTimeMillis()+500;
-			
+
 		}else{
 			shutdowntime=0;
 			starttime = System.currentTimeMillis();
@@ -420,30 +477,10 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 			poweron=true;
 		}
 	}
-	});
-	b=(Button)findViewById(R.id.btMode);
-	b.setOnClickListener(new View.OnClickListener() {
-		@Override
-		public void onClick(View v) {
-			modechange(v);
-	}});
-	b=(Button)findViewById(R.id.btLight);
-	b.setOnClickListener(new View.OnClickListener() {
-		@Override
-		public void onClick(View v) {
-			showDebug=!showDebug;
-		}});	
+	};
 	
-		
-	}
-  	@Override
-    public void onPause() {
-        super.onPause();
-        timer.cancel();
-        timer.purge();
-        h2.removeCallbacks(run);
-    }
-
+	
+	
 	private void debugVisible(Boolean show){
 		View debug=findViewById(R.id.llDebuginfo);
 		if(show){
