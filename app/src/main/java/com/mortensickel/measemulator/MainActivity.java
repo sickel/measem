@@ -41,9 +41,9 @@ import org.apache.http.impl.execchain.*;
 // DONE location 
 // DONE input background and source. Calculate activity from distance
 // TODO Use distribution map 
-// TODO add settings menu
+// DONE add settings menu
 // TODO generic skin
-// TODO handle shutdown
+// TODO handle pause and shutdown
 
 
 public class MainActivity extends Activity 
@@ -249,12 +249,13 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	Runnable run = new Runnable() {
         @Override
         public void run() {
+			int n=1;
 			long pause=pause(getInterval());
 			h2.postDelayed(run,pause);
 			if(showDebug){
 				tvPause.setText(String.format("%d",pause));
 			}
-			receivepulse();
+			receivepulse(n);
         }
     };
     
@@ -286,7 +287,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	}
 	
 	
-	public void receivepulse(){
+	public void receivepulse(int n){
 		LinearLayout myText = (LinearLayout) findViewById(R.id.llLed );
 		Animation anim = new AlphaAnimation(0.0f, 1.0f);
 		anim.setDuration(20); //You can manage the time of the blink with this parameter
@@ -294,7 +295,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 		anim.setRepeatMode(Animation.REVERSE);
 		anim.setRepeatCount(0);
 		myText.startAnimation(anim);
-		pulses++;
+		pulses=pulses+1;
 		Double sdev=Math.sqrt(pulses);
 		if(showDebug){
 		tvPulsedata.setText(String.format("%d - %.1f - %.0f %%",pulses,sdev,sdev/pulses*100));
