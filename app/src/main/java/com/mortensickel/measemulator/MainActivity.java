@@ -80,12 +80,36 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 	private Double background=0.0;
 	private float sourcestrength=1000;
 	private boolean showDebug=false;
+	private final String PULSES="pulses";
+	
+	
 	@Override
 	public void onConnectionFailed(ConnectionResult p1)
 	{
 		// TODO: Implement this method
 	}
 
+	
+	@Override
+	public void onSaveInstanceState(Bundle savedInstanceState) {
+		// Save the user's current game state
+		savedInstanceState.putLong(PULSES,pulses);
+		//savedInstanceState.putInt(PLAYER_LEVEL, mCurrentLevel);
+
+		// Always call the superclass so it can save the view hierarchy state
+		super.onSaveInstanceState(savedInstanceState);
+	}
+	
+	public void onRestoreInstanceState(Bundle savedInstanceState) {
+		// Always call the superclass so it can restore the view hierarchy
+		super.onRestoreInstanceState(savedInstanceState);
+
+		// Restore state members from saved instance
+		pulses = savedInstanceState.getLong(PULSES);
+		//mCurrentLevel = savedInstanceState.getInt(PLAYER_LEVEL);
+	}
+	
+	
 	protected void createLocationRequest(){
 		loreq = new LocationRequest();
 		loreq.setInterval(gpsinterval);
@@ -373,20 +397,22 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 		tvAct=(EditText)findViewById(R.id.activity);
 		tvAct.addTextChangedListener(activityTW);
         switchMode(mode);
-    Button b = (Button)findViewById(R.id.btPower);
-	b.setOnClickListener(onOffClick);
-	b=(Button)findViewById(R.id.btMode);
-	b.setOnClickListener(new View.OnClickListener() {
-		@Override
-		public void onClick(View v) {
-			modechange(v);
-	}});
-	b=(Button)findViewById(R.id.btLight);
-	b.setOnClickListener(new View.OnClickListener() {
-		@Override
-		public void onClick(View v) {
-			showDebug=!showDebug;
-		}});		
+  	  	Button b = (Button)findViewById(R.id.btPower);
+		b.setOnClickListener(onOffClick);
+		b=(Button)findViewById(R.id.btMode);
+		b.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				modechange(v);
+			}
+		});
+		b=(Button)findViewById(R.id.btLight);
+		b.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				showDebug=!showDebug;
+			}
+		});		
 	}
 	
 	
@@ -416,8 +442,8 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 		sourceact=Integer.parseInt(act);
 		// TODO better errorchecking.
 		// TODO disable if using geolocation
-	}
-	});
+	}};
+	
 	
 	
 	
@@ -451,7 +477,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 			poweron=true;
 		}
 	}
-	});
+	};
 	
 	
 	
