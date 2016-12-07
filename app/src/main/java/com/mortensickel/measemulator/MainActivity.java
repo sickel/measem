@@ -371,29 +371,59 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
         tvPause = (TextView)findViewById(R.id.tvPause);
 		tvDoserate = (TextView)findViewById(R.id.etDoserate);
 		tvAct=(EditText)findViewById(R.id.activity);
-		tvAct.addTextChangedListener(new TextWatcher() {
-				@Override
-				public void onTextChanged(CharSequence s, int start, int before, int count) {
-					// TODO Auto-generated method stub
-				}
-
-				@Override
-				public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-					// TODO Auto-generated method stub
-				}
-
-				@Override
-				public void afterTextChanged(Editable s) {
-					String act=tvAct.getText().toString();
-					if(act.equals("")){act="1";}
-					sourceact=Integer.parseInt(act);
-					// TODO better errorchecking.
-					// TODO disable if using geolocation
-				}
-			});
+		tvAct.addTextChangedListener(activityTW);
         switchMode(mode);
     Button b = (Button)findViewById(R.id.btPower);
+	b.setOnClickListener(onOffClick);
+	b=(Button)findViewById(R.id.btMode);
 	b.setOnClickListener(new View.OnClickListener() {
+		@Override
+		public void onClick(View v) {
+			modechange(v);
+	}});
+	b=(Button)findViewById(R.id.btLight);
+	b.setOnClickListener(new View.OnClickListener() {
+		@Override
+		public void onClick(View v) {
+			showDebug=!showDebug;
+		}});		
+	}
+	
+	
+  	@Override
+    public void onPause() {
+        super.onPause();
+        timer.cancel();
+        timer.purge();
+        h2.removeCallbacks(run);
+    }
+
+	TextWatcher activityTW = new TextWatcher() {
+	@Override
+	public void onTextChanged(CharSequence s, int start, int before, int count) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void afterTextChanged(Editable s) {
+		String act=tvAct.getText().toString();
+		if(act.equals("")){act="1";}
+		sourceact=Integer.parseInt(act);
+		// TODO better errorchecking.
+		// TODO disable if using geolocation
+	}
+	});
+	
+	
+	
+	
+	
+	View.OnClickListener  onOffClick = new View.OnClickListener() {
 	@Override
 	public void onClick(View v) {
 		if(poweron){
@@ -408,7 +438,7 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 				switchMode(mode);
 			}
 			shutdowntime = System.currentTimeMillis()+500;
-			
+
 		}else{
 			shutdowntime=0;
 			starttime = System.currentTimeMillis();
@@ -422,29 +452,9 @@ implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFail
 		}
 	}
 	});
-	b=(Button)findViewById(R.id.btMode);
-	b.setOnClickListener(new View.OnClickListener() {
-		@Override
-		public void onClick(View v) {
-			modechange(v);
-	}});
-	b=(Button)findViewById(R.id.btLight);
-	b.setOnClickListener(new View.OnClickListener() {
-		@Override
-		public void onClick(View v) {
-			showDebug=!showDebug;
-		}});	
 	
-		
-	}
-  	@Override
-    public void onPause() {
-        super.onPause();
-        timer.cancel();
-        timer.purge();
-        h2.removeCallbacks(run);
-    }
-
+	
+	
 	private void debugVisible(Boolean show){
 		View debug=findViewById(R.id.llDebuginfo);
 		if(show){
